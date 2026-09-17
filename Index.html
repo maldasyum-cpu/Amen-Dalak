@@ -1,0 +1,338 @@
+Baba Bro Ykatit 21:
+<!DOCTYPE html>
+<html lang="am">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Music AI — Ethiopian Music Experience</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,"Noto Sans Ethiopic",sans-serif;
+  background:linear-gradient(135deg,#101522,#18243b);
+  color:#fff;
+  min-height:100vh;
+}
+.container{max-width:760px;margin:auto;padding:24px 16px}
+header{text-align:center;padding:20px 0}
+header h1{font-size:32px;margin:0 0 8px}
+header p{opacity:.75;margin:0}
+.card{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:22px;
+  padding:22px;
+  margin:16px 0;
+  backdrop-filter:blur(10px);
+}
+label{display:block;margin:14px 0 7px;font-weight:bold}
+textarea,select,input{
+  width:100%;padding:13px;border:0;border-radius:12px;
+  background:#fff;color:#111;font-size:16px;outline:none;
+}
+textarea{min-height:150px;resize:vertical}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button{
+  width:100%;padding:14px;border:0;border-radius:14px;
+  font-size:17px;font-weight:bold;cursor:pointer;margin-top:16px;
+  background:#00d084;color:#07130e;
+}
+button:active{transform:scale(.98)}
+.secondary{background:#fff;color:#111}
+.result{display:none}
+.song{
+  background:rgba(0,0,0,.2);
+  border-radius:16px;padding:16px;margin:14px 0
+}
+.song h3{margin:0 0 8px}
+.song p{margin:0;opacity:.75}
+.wave{
+  height:65px;display:flex;align-items:center;
+  justify-content:center;gap:7px;margin:10px 0;
+}
+.wave span{
+  width:7px;height:25px;background:#00d084;border-radius:10px;
+  animation:wave 1s ease-in-out infinite;
+  animation-play-state:paused;
+}
+.wave.playing span{animation-play-state:running}
+.wave span:nth-child(2){animation-delay:.1s}
+.wave span:nth-child(3){animation-delay:.2s}
+.wave span:nth-child(4){animation-delay:.3s}
+.wave span:nth-child(5){animation-delay:.4s}
+.wave span:nth-child(6){animation-delay:.3s}
+.wave span:nth-child(7){animation-delay:.2s}
+@keyframes wave{
+  0%,100%{height:18px}
+  50%{height:58px}
+}
+.status{text-align:center;min-height:24px;opacity:.8;margin-top:10px}
+footer{text-align:center;padding:25px;opacity:.65}
+@media(max-width:600px){.grid{grid-template-columns:1fr}header h1{font-size:26px}}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+  <h1>🎵 Music AI</h1>
+  <p>የኢትዮጵያ ሙዚቃ ማመንጫ Demo</p>
+</header>
+
+<div class="card">
+
+  <label for="lyrics">📝 ግጥምህን አስገባ</label>
+  <textarea id="lyrics" placeholder="ለምሳሌ፦
+ኢትዮጵያ ሀገሬ ውድ ነሽ
+በፍቅርሽ ልቤ ደስ ይለዋል..."></textarea>
+
+  <div class="grid">
+    <div>
+      <label for="style">🎼 Style</label>
+      <select id="style">
+        <option>Habesha</option>
+        <option>Tizita</option>
+        <option>Ethio Jazz</option>
+        <option>Traditional</option>
+        <option>Afrobeat</option>
+        <option>Pop</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="mood">❤️ Mood</label>
+      <select id="mood">
+        <option>Happy</option>
+        <option>Romantic</option>
+        <option>Sad</option>
+        <option>Energetic</option>
+        <option>Peaceful</option>
+      </select>
+    </div>
+  </div>
+
+  <label for="voice">🎤 Voice</label>
+  <select id="voice">
+    <option>Male</option>
+    <option>Female</option>
+    <option>Instrumental</option>
+  </select>
+
+  <button onclick="generateMusic()">🎵 Generate Music</button>
+  <div class="status" id="status"></div>
+
+</div>
+
+<div class="card result" id="result">
+
+  <h2>🎶 ሙዚቃህ ተዘጋጅቷል!</h2>
+
+  <div class="wave" id="wave">
+    <span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span>
+  </div>
+
+  <div class="song">
+    <h3 id="songTitle">የእኔ ሙዚቃ</h3>
+    <p id="songInfo"></p>
+  </div>
+
+  <button class="secondary" id="playButton" onclick="playMusic()">
+    ▶️ Play
+  </button>
+
+  <button class="secondary" onclick="downloadSong()">
+    ⬇️ Save / Download WAV
+  </button>
+
+  <audio id="audio" controls style="width:100%;margin-top:16px;display:none"></audio>
+
+</div>
+
+</div>
+
+<footer>
+  🎵 Music AI — Ethiopian Music Experience
+</footer>
+
+<script>
+let audioURL = null;
+let generatedWav = null;
+
+const NOTE = {
+  C4:261.63, D4:293.66, E4:329.63,
+  F4:349.23, G4:392.00, A4:440.00,
+  B4:493.88, C5:523.25
+};
+
+function generateMusic(){
+
+  const lyrics = document.getElementById("lyrics").value.trim();
+  const style = document.getElementById("style").value;
+  const mood = document.getElementById("mood").value;
+  const voice = document.getElementById("voice").value;
+
+  if(!lyrics){
+    alert("እባክህ መጀመሪያ ግጥም አስገባ ❤️");
+    return;
+  }
+
+  document.getElementById("status").innerText =
+    "🎶 ሙዚቃ እየተዘጋጀ ነው...";
+
+  document.getElementById("songTitle").innerText =
+    "🎵 " + style + " Music";
+
+  document.getElementById("songInfo").innerText =
+    "Style: " + style +
+    " | Mood: " + mood +
+    " | Voice: " + voice;
+
+  document.getElementById("result").style.display = "block";
+
+  // Browser-only demo audio
+  setTimeout(() => {
+    generatedWav = createWav(mood, style);
+    audioURL = URL.createObjectURL(generatedWav);
+
+    const audio = document.getElementById("audio");
+    audio.src = audioURL;
+    audio.style.display = "block";
+
+    document.getElementById("status").innerText =
+      "✅ ሙዚቃው ተዘጋጅቷል!";
+
+    window.scrollTo({
+      top:document.body.scrollHeight,
+      behavior:"smooth"
+    });
+  },700);
+}
+
+
+function playMusic(){
+
+  const audio = document.getElementById("audio");
+
+  if(!audio.src){
+    alert("መጀመሪያ Generate Music ይጫኑ።");
+    return;
+  }
+
+  if(audio.paused){
+    audio.play();
+    document.getElementById("playButton").innerText = "⏹️ Stop";
+    document.getElementById("wave").classList.add("playing");
+  }else{
+    audio.pause();
+    audio.currentTime = 0;
+    document.getElementById("playButton").innerText = "▶️ Play";
+    document.getElementById("wave").classList.remove("playing");
+  }
+
+  audio.onended = () => {
+    document.getElementById("playButton").innerText = "▶️ Play";
+    document.getElementById("wave").classList.remove("playing");
+  };
+}
+
+
+function downloadSong(){
+
+  if(!generatedWav){
+    alert("መጀመሪያ Generate Music ይጫኑ።");
+    return;
+  }
+
+  const a = document.createElement("a");
+  a.href = audioURL;
+  a.download = "my-ethiopian-music.wav";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+
+// Creates a simple WAV melody in the browser.
+// This is a demo synthesizer, not an AI singing engine.
+function createWav(mood, style){
+
+  const sampleRate = 44100;
+  const duration = 8;
+  const samples = sampleRate * duration;
+  const buffer = new ArrayBuffer(44 + samples * 2);
+  const view = new DataView(buffer);
+
+  writeString(view,0,"RIFF");
+  view.setUint32(4,36 + samples*2,true);
+  writeString(view,8,"WAVE");
+  writeString(view,12,"fmt ");
+  view.setUint32(16,16,true);
+  view.setUint16(20,1,true);
+  view.setUint16(22,1,true);
+  view.setUint32(24,sampleRate,true);
+  view.setUint32(28,sampleRate*2,true);
+  view.setUint16(32,2,true);
+  view.setUint16(34,16,true);
+  writeString(view,36,"data");
+  view.setUint32(40,samples*2,true);
+
+  let notes;
+
+  if(mood === "Sad"){
+    notes = [NOTE.A4,NOTE.F4,NOTE.E4,NOTE.D4,NOTE.C4];
+  }else if(mood === "Romantic"){
+    notes = [NOTE.C4,NOTE.E4,NOTE.G4,NOTE.A4,NOTE.G4,NOTE.E4];
+  }else if(mood === "Energetic"){
+    notes = [NOTE.C5,NOTE.G4,NOTE.A4,NOTE.C5,NOTE.G4,NOTE.E4];
+  }else if(mood === "Peaceful"){
+    notes = [NOTE.C4,NOTE.D4,NOTE.E4,NOTE.G4,NOTE.E4];
+  }else{
+    notes = [NOTE.C4,NOTE.D4,NOTE.E4,NOTE.G4,NOTE.A4,NOTE.G4];
+  }
+
+  for(let i=0;i<samples;i++){
+
+    const t = i/sampleRate;
+    const noteIndex = Math.floor(t/0.5) % notes.length;
+    const frequency = notes[noteIndex];
+
+    const local = (t % 0.5) / 0.5;
+
+    // Soft envelope
+    let envelope = 1;
+    if(local < 0.08) envelope = local/0.08;
+    if(local > 0.82) envelope = (1-local)/0.18;
+
+    let sample =
+      Math.sin(2*Math.PI*frequency*t) * 0.45 +
+      Math.sin(2*Math.PI*frequency*2*t) * 0.12;
+
+    // Slight style variation
+    if(style === "Ethio Jazz"){
+      sample += Math.sin(2*Math.PI*frequency*0.5*t)*0.10;
+    }
+
+    sample *= envelope * 0.55;
+
+const value = Math.max(-1,Math.min(1,sample));
+    view.setInt16(44+i*2,value*32767,true);
+  }
+
+  return new Blob([buffer],{type:"audio/wav"});
+}
+
+
+function writeString(view,offset,string){
+  for(let i=0;i<string.length;i++){
+    view.setUint8(offset+i,string.charCodeAt(i));
+  }
+}
+</script>
+
+</body>
+</html>

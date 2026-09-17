@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ሙዚቃ Music AI</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #06152b;
+      color: white;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 20px;
+      text-align: center;
+      background: linear-gradient(135deg,#071a35,#102d52);
+    }
+
+    header h1 {
+      color: #ffbd19;
+      font-size: 28px;
+    }
+
+    header p {
+      margin-top: 7px;
+      color: #cbd6e8;
+    }
+
+    .container {
+      width: 92%;
+      max-width: 650px;
+      margin: auto;
+      padding: 20px 0 40px;
+    }
+
+    .card {
+      background: #0b2341;
+      border: 1px solid #173b66;
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 8px 25px rgba(0,0,0,.25);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #dce7f5;
+      font-weight: bold;
+    }
+
+    textarea,
+    select,
+    input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #28517e;
+      background: #071a31;
+      color: white;
+      outline: none;
+      margin-bottom: 16px;
+    }
+
+    textarea {
+      min-height: 130px;
+      resize: vertical;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 14px;
+      background: #ffb914;
+      color: #07172b;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #ffc83d;
+    }
+
+    .secondary {
+      background: #15395f;
+      color: white;
+      margin-top: 10px;
+    }
+
+    .result {
+      display: none;
+      text-align: center;
+    }
+
+    .wave {
+      height: 70px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      margin: 15px 0;
+    }
+
+    .wave span {
+      width: 6px;
+      height: 25px;
+      background: #a855f7;
+      border-radius: 10px;
+      animation: music 1s infinite ease-in-out;
+    }
+
+    .wave span:nth-child(2) { animation-delay:.1s; }
+    .wave span:nth-child(3) { animation-delay:.2s; }
+    .wave span:nth-child(4) { animation-delay:.3s; }
+    .wave span:nth-child(5) { animation-delay:.4s; }
+    .wave span:nth-child(6) { animation-delay:.5s; }
+    .wave span:nth-child(7) { animation-delay:.6s; }
+
+    @keyframes music {
+      0%,100% { height:20px; }
+      50% { height:60px; }
+    }
+
+    .song {
+      background:#071a31;
+      border-radius:14px;
+      padding:15px;
+      margin-top:12px;
+      border:1px solid #21466f;
+    }
+
+    .song h3 {
+      color:#ffbd19;
+      margin-bottom:7px;
+    }
+
+    footer {
+      text-align:center;
+      color:#7186a2;
+      padding:20px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>🎵 ሙዚቃ Music AI</h1>
+  <p>ከልብህ → ወደ ሙዚቃ → በ AI ❤️</p>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <label>✍️ ግጥም አስገባ</label>
+
+    <textarea id="lyrics"
+      placeholder="ለምሳሌ፦ እባክህ እቀፈኝ... የልቤን ስሜት በሙዚቃ ግለጽልኝ"></textarea>
+
+    <div class="row">
+
+      <div>
+        <label>🎼 Style</label>
+        <select id="style">
+          <option>Ethiopian</option>
+          <option>Acoustic</option>
+          <option>Afrobeat</option>
+          <option>R&B</option>
+          <option>Ballad</option>
+          <option>Traditional</option>
+        </select>
+      </div>
+
+      <div>
+        <label>😊 Mood</label>
+        <select id="mood">
+          <option>Romantic</option>
+          <option>Happy</option>
+          <option>Sad</option>
+          <option>Emotional</option>
+          <option>Energetic</option>
+          <option>Relaxed</option>
+        </select>
+      </div>
+
+    </div>
+
+    <label>🎤 Voice</label>
+    <select id="voice">
+      <option>Male</option>
+      <option>Female</option>
+    </select>

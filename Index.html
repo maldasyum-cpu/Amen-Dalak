@@ -333,6 +333,249 @@ function writeString(view,offset,string){
   }
 }
 </script>
+<!-- MY SONGS -->
+<div class="card" id="mySongsCard">
+  <h2>🎵 My Songs</h2>
+  <p>ያስቀመጥካቸው ሙዚቃዎች</p>
 
+  <button class="secondary" onclick="saveCurrentSong()">
+    💾 Save to My Songs
+  </button>
+
+  <div id="mySongsList">
+    <p>እስካሁን የተቀመጠ ሙዚቃ የለም።</p>
+  </div>
+</div>
+
+<script>
+let mySongsDB;
+
+const request = indexedDB.open("AmenDalakDB", 1);
+
+request.onupgradeneeded = function(event) {
+  mySongsDB = event.target.result;
+
+  if (!mySongsDB.objectStoreNames.contains("songs")) {
+    mySongsDB.createObjectStore("songs", {
+      keyPath: "id",
+      autoIncrement: true
+    });
+  }
+};
+
+request.onsuccess = function(event) {
+  mySongsDB = event.target.result;
+  showMySongs();
+};
+
+request.onerror = function() {
+  console.log("My Songs database error");
+};
+
+async function saveCurrentSong() {
+
+  if (!mySongsDB) {
+    alert("እባክህ ገጹ እስኪጫን ጠብቅ።");
+    return;
+  }
+
+  const audio = document.getElementById("audio");
+  const titleElement = document.getElementById("songTitle");
+
+  if (!audio || !audio.src) {
+    alert("መጀመሪያ ሙዚቃ ፍጠር።");
+    return;
+  }
+
+  try {
+
+    const response = await fetch(audio.src);
+    const blob = await response.blob();
+
+    const song = {
+      title: titleElement
+        ? titleElement.innerText || "My Song"
+        : "My Song",
+
+      blob: blob,
+
+      createdAt: new Date().toLocaleString()
+    };
+
+    const transaction =
+      mySongsDB.transaction(["songs"], "readwrite");
+
+    transaction
+      .objectStore("songs")
+      .add(song);
+
+    transaction.oncomplete = function() {
+      alert("✅ ሙዚቃው My Songs ውስጥ ተቀምጧል!");
+      showMySongs();
+    };
+
+  } catch(error) {
+
+    console.error(error);
+
+    alert("❌ ሙዚቃውን ማስቀመጥ አልተቻለም።");
+  }
+}
+
+function showMySongs() {
+
+  if (!mySongsDB) return;
+
+  const list = document.getElementById("mySongsList");
+
+  const transaction =
+    mySongsDB.transaction(["songs"], "readonly");
+
+  const store = transaction.objectStore("songs");
+
+  const songs = [];
+
+  store.openCursor().onsuccess = function(event) {
+
+    const cursor = event.target.result;
+
+    if (cursor) {
+
+      songs.push({
+        id: cursor.key,
+        ...cursor.value
+      });
+
+      cursor.continue();
+
+    } else {
+
+      if (songs.length === 0) {
+
+        list.innerHTML =
+          "<p>እስካሁን የተቀመጠ ሙዚቃ የለም።</p>";
+
+        return;
+      }
+
+      list.innerHTML = "";
+
+      songs.reverse().forEach(song => {
+
+        const item = document.createElement("div");
+
+        item.className = "song";
+
+        item.style.marginTop = "15px";
+        item.style.padding = "12px";
+        item.style.borderRadius = "12px";
+        item.style.background = "rgba(255,255,255,0.06)";
+
+        item.innerHTML = `
+          <h3>🎵 ${escapeSongText(song.title)}</h3>
+          <small>${song.createdAt}</small>
+          <br><br>
+
+          <button class="secondary"
+            onclick="playSavedSong(${song.id})">
+            ▶️ Play
+          </button>
+
+          <button class="secondary"
+            onclick="downloadSavedSong(${song.id})">
+            ⬇️ Download
+          </button>
+
+          <button class="secondary"
+            onclick="deleteSavedSong(${song.id})">
+            🗑️ Delete
+          </button>
+        `;
+
+        list.appendChild(item);
+      });
+    }
+  };
+}
+
+function playSavedSong(id) {
+
+  const transaction =
+    mySongsDB.transaction(["songs"], "readonly");
+
+  transaction.objectStore("songs").get(id).onsuccess =
+    function(event) {
+
+      const song = event.target.result;
+
+      if (!song) return;
+
+      const url = URL.createObjectURL(song.blob);
+
+      const audio = document.getElementById("audio");
+
+      audio.src = url;
+      audio.play();
+
+    };
+}
+
+function downloadSavedSong(id) {
+
+  const transaction =
+    mySongsDB.transaction(["songs"], "readonly");
+
+  transaction.objectStore("songs").get(id).onsuccess =
+    function(event) {
+
+      const song = event.target.result;
+
+      if (!song) return;
+
+      const url = URL.createObjectURL(song.blob);
+
+      const a = document.createElement("a");
+
+      a.href = url;
+      a.download = song.title + ".wav";
+
+      document.body.appendChild(a);
+
+      a.click();
+
+      a.remove();
+
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 1000);
+    };
+}
+
+function deleteSavedSong(id) {
+
+  if (!confirm("ይህን ሙዚቃ ከ My Songs ማጥፋት ትፈልጋለህ?")) {
+    return;
+  }
+
+  const transaction =
+    mySongsDB.transaction(["songs"], "readwrite");
+
+  transaction.objectStore("songs").delete(id);
+
+  transaction.oncomplete = function() {
+    showMySongs();
+  };
+}
+
+function escapeSongText(text) {
+
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+</script>
 </body>
 </html>
